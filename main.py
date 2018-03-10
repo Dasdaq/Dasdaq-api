@@ -67,7 +67,7 @@ def init_df(df):
 
 def address_Input_Data(df, address):
     '返回某个地址的所有输入值'
-    return df[df['from'] == address].total_price.sum()
+    return -df[df['from'] == address].total_price.sum()
 
 
 def toploss(df1, df2, top=10):
@@ -80,8 +80,8 @@ def toploss(df1, df2, top=10):
         df3[i] = address_Input_Data(df1, i)
     if len(df1['to'].value_counts().index):
         userToContract(df3, contract_address=df1['to'].value_counts().index[0])
-    return {'loss': toploss_tolist(df3.sort_values(ascending=True)[:top]),
-            'win': toploss_tolist(df3.sort_values(ascending=False)[:top])}
+    return {'loss': toploss_tolist(df3[df3.values < 0].sort_values()[:top]),
+            'win': toploss_tolist(df3[df3.values > 0].sort_values(ascending=True)[:top])}
 
 
 def userToContract(df, contract_address):
@@ -136,19 +136,18 @@ def run():
                                              })))
     df5 = init_df(df5)
     # 所有的合约
-    address = df5.address.value_counts().index
-    for contract_address in address:
-        df_ = df5[df5.address == contract_address]
+    a = list(db['dapps'].find({}, {'id': 1, 'address': 1}))
+    for i in a:
+        df_ = df5[df5.address.isin(i['address'])]
+        _id = i['id']
         df1 = df_[df_.action == 'txlist']
         df2 = df_[df_.action == 'txlistinternal']
 
         # 游戏总体情况
         ret = x(df1)
-        ret['contract'] = contract_address
         # 更新数据库的时间
         ret['updatedAt'] = arrow.utcnow().format(r'YYYY-MM-DD HH:mm:ss')
-        _id = from_Mongo_Find_Address(contract_address)
-        ret['_id'] = _id
+        ret['id'] = _id
 
         # 1h的数据，按每分钟分割
         start_time, end_time = lastxxt('1h')
@@ -166,12 +165,12 @@ def run():
         ret['h1'] = h1
         ret['d1'] = d1
         ret['d7'] = d7
-        savetomongo(data=ret, dbname='dapps', key='_id')
+        savetomongo(data=ret, dbname='dapps', key='id')
 
         # 玩家盈利情况
         yl = toploss(df1, df2)
-        yl['contract'] = contract_address
-        savetomongo(data=yl, dbname='top', key='contract')
+        yl['id'] = _id
+        savetomongo(data=yl, dbname='top', key='id')
     db['usercontract'].drop()
     db['usercontract'].insert_one(USER_CONTRACT)
 
