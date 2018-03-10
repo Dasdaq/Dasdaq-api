@@ -75,5 +75,13 @@ def toploss(df1, df2, top=10):
     df3 = x1 - x2
     for i in df3[df3.isnull()].index:
         df3[i] = address_Input_Data(df1, i)
-    return {'win': df3.sort_values(ascending=True)[:top],
-            'loss': df3.sort_values(ascending=False)[:top]}
+    return {'win': toploss_tolist(df3.sort_values(ascending=True)[:top]),
+            'loss': toploss_tolist(df3.sort_values(ascending=False)[:top])}
+
+
+def toploss_tolist(df):
+    '把Series 数据转成list'
+    ret = []
+    for i, (k, v) in enumerate(df.to_dict().items(), 1):
+        ret.append({'index': i, 'address': k, 'value': v})
+    return ret
