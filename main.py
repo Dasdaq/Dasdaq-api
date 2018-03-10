@@ -156,10 +156,17 @@ def run():
         h1 = dateRange(df1, m1, day=False)
         # 1d的数据，安
         start_time, end_time = lastxxt('1d')
+        df1d = df1[(df1['t'] > start_time) & (df1['t'] <= end_time)]
+        ret['volumeLastDay'] = df1d.value.sum() / 1e+18
+        ret['txLastDay'] = len(df1d)
+        ret['dauLastDay'] = len(df1d['from'].value_counts().index)
         _ = pd.date_range(start_time, end_time, freq='H')
         d1 = dateRange(df1, _, day=False)
         # 7d
         start_time, end_time = lastxxt('7d')
+        df7d = df1[(df1['t'] > start_time) & (df1['t'] <= end_time)]
+        ret['volumeLastWeek'] = df7d.value.sum() / 1e+18
+        ret['txLastWeek'] = len(df7d)
         _ = pd.date_range(start_time, end_time, freq='D')
         d7 = dateRange(df1, _, day=True)
 
