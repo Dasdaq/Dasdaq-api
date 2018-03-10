@@ -62,9 +62,8 @@ class DappContract(Resource):
 class DappTop(Resource):
     @cache.cached(timeout=60 * 5)
     def get(self, dapp_id):
-        contract = '0xc7069173721f6cd6322ce61f5912b31315c40fc2'
         contract = mongo.db.top.find_one(
-            {'contract': contract}, {'_id': 0})
+            {'id': dapp_id}, {'_id': 0, 'id': 0})
         return {'data': contract}
 
     def post(self, ):
