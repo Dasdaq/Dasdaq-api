@@ -72,10 +72,38 @@ class DappTop(Resource):
         pass
 
 
+class PlaysTop(Resource):
+    @cache.cached(timeout=60 * 5)
+    def get(self, address):
+        a = mongo.db.usercontract.find_one({}, {'_id': 0})
+        data = []
+        for i in a[address]:
+            id, name = _getIdAndName(i['address'])
+            if id:
+                data.append({'value': i['value'], 'id': id, 'name': name})
+        # print(1)
+        return {'data': data, 'balance': 2.3, 'total': '1232324242424'}
+
+
+def _getIdAndName(ad):
+    print(ad)
+    f = mongo.db.dapps.find_one({'address': {"$in": [ad]}})
+    if f:
+        return f['id'], f['slug']
+    else:
+        return '', ''
+
+
+def getBalance(address):
+    # todo:获取用户余额
+    return ''
+
+
 api.add_resource(Dapps, '/api/dapps')
 api.add_resource(Dapp, '/api/dapps/<string:dapp_id>')
 api.add_resource(DappContract, '/api/dapps/<string:dapp_id>/contract')
 api.add_resource(DappTop, '/api/dapps/<string:dapp_id>/top')
+api.add_resource(PlaysTop, '/api/user/<string:address>')
 
 
 @celery.task
