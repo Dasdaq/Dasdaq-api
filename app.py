@@ -28,7 +28,7 @@ app.config.from_pyfile('config.py')
 api = Api(app)
 mongo = PyMongo(app)
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
-celery = make_celery(flask_app)
+celery = make_celery(app)
 
 
 class Dapps(Resource):
