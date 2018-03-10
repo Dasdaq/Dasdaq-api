@@ -33,10 +33,19 @@ class DappContract(Resource):
         return {'data': contract}
 
 
+class DappTop(Resource):
+    @cache.cached(timeout=60 * 5)
+    def get(self, contract):
+        contract = mongo.db.top.find_one(
+            {'contract': contract}, {'_id': 0})
+        return {'data': contract}
+
+
 api.add_resource(Dapps, '/api/dapps')
 api.add_resource(Dapp, '/api/dapps/<string:dapp_id>')
 api.add_resource(DappContract, '/api/dapps/<string:dapp_id>/contract')
+api.add_resource(DappTop, '/api/contract/<string:contract>/top')
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True,host='0.0.0.0')
