@@ -58,8 +58,9 @@ def init_df(df):
     '初始化df'
     df = coverStrToFloat(df)
     df['t'] = df.timeStamp.apply(todt)
+
     # 把交易失败的金额全部设置为0，主要是手续费还是需要交的
-    df.loc[df.isError == 1, 'value'] = 0
+    df.loc[(df.isError == 1) | (df.isError == '1'), 'value'] = 0
     df['sxf'] = df.gasPrice * df.gasUsed
     df['total_price'] = df.value + df.sxf
     return df
