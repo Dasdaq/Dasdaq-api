@@ -3,12 +3,32 @@ from flask_restful import Resource, Api
 from flask_cache import Cache
 from flask_pymongo import PyMongo
 from flask_cors import CORS
+from celery import Celery
+
+
+def make_celery(app):
+    celery = Celery(app.import_name, backend=app.config['CELERY_RESULT_BACKEND'],
+                    broker=app.config['CELERY_BROKER_URL'])
+    celery.conf.update(app.config)
+    TaskBase = celery.Task
+
+    class ContextTask(TaskBase):
+        abstract = True
+
+        def __call__(self, *args, **kwargs):
+            with app.app_context():
+                return TaskBase.__call__(self, *args, **kwargs)
+    celery.Task = ContextTask
+    return celery
+
+
 app = Flask(__name__)
 CORS(app)
 app.config.from_pyfile('config.py')
 api = Api(app)
 mongo = PyMongo(app)
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
+celery = make_celery(flask_app)
 
 
 class Dapps(Resource):
