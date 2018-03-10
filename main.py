@@ -75,13 +75,13 @@ def toploss(df1, df2, top=10):
     x1 = df1['total_price'].groupby(df1['from']).sum()
     x2 = df2['value'].groupby(df2['to']).sum()
 
-    df3 = x1 - x2
+    df3 = x2 - x1
     for i in df3[df3.isnull()].index:
         df3[i] = address_Input_Data(df1, i)
     if len(df1['to'].value_counts().index):
         userToContract(df3, contract_address=df1['to'].value_counts().index[0])
-    return {'win': toploss_tolist(df3.sort_values(ascending=True)[:top]),
-            'loss': toploss_tolist(df3.sort_values(ascending=False)[:top])}
+    return {'loss': toploss_tolist(df3.sort_values(ascending=True)[:top]),
+            'win': toploss_tolist(df3.sort_values(ascending=False)[:top])}
 
 
 def userToContract(df, contract_address):
