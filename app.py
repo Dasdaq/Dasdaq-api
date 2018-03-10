@@ -20,6 +20,7 @@ def make_celery(app):
         def __call__(self, *args, **kwargs):
             with app.app_context():
                 return TaskBase.__call__(self, *args, **kwargs)
+
     celery.Task = ContextTask
     return celery
 
@@ -36,7 +37,7 @@ celery = make_celery(app)
 class Dapps(Resource):
     @cache.cached(timeout=60 * 5)
     def get(self):
-        dapp = mongo.db.dapps.find({}, {'_id': 0, 'address': 0})
+        dapp = mongo.db.dapps.find({}, {'_id': 0, 'address': 0, 'h1': 0, 'd1': 0, 'd7': 0})
         return {'data': list(dapp)}
 
 
@@ -66,7 +67,7 @@ class DappTop(Resource):
             {'contract': contract}, {'_id': 0})
         return {'data': contract}
 
-    def post(self,):
+    def post(self, ):
         # todo: 留言内容入库
         pass
 
@@ -83,4 +84,4 @@ def hello():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=False, host='0.0.0.0', port=5000)
