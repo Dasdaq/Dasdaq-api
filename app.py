@@ -2,8 +2,9 @@ from flask import Flask
 from flask_restful import Resource, Api
 from flask_cache import Cache
 from flask_pymongo import PyMongo
-
+from flask_cors import CORS
 app = Flask(__name__)
+CORS(app)
 app.config.from_pyfile('config.py')
 api = Api(app)
 mongo = PyMongo(app)
@@ -35,17 +36,22 @@ class DappContract(Resource):
 
 class DappTop(Resource):
     @cache.cached(timeout=60 * 5)
-    def get(self, contract):
+    def get(self, dapp_id):
+        contract = '0xc7069173721f6cd6322ce61f5912b31315c40fc2'
         contract = mongo.db.top.find_one(
             {'contract': contract}, {'_id': 0})
         return {'data': contract}
+
+    def post(self,):
+        # todo: 留言内容入库
+        pass
 
 
 api.add_resource(Dapps, '/api/dapps')
 api.add_resource(Dapp, '/api/dapps/<string:dapp_id>')
 api.add_resource(DappContract, '/api/dapps/<string:dapp_id>/contract')
-api.add_resource(DappTop, '/api/contract/<string:contract>/top')
+api.add_resource(DappTop, '/api/dapps/<string:dapp_id>/top')
 
 
 if __name__ == '__main__':
-    app.run(debug=True,host='0.0.0.0')
+    app.run(debug=False, host='0.0.0.0')
