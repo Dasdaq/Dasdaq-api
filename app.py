@@ -54,7 +54,7 @@ class DappContract(Resource):
         contract = mongo.db.dapps.find_one(
             {'id': dapp_id}, {'_id': 0, 'address': 1})
         contract = [
-            {'address': i, 'link': 'https://etherscan.io/address/{}'.format(i)} for i in contract]
+            {'address': i, 'link': 'https://etherscan.io/address/{}'.format(i)} for i in contract['address']]
         return {'data': contract}
 
 
@@ -83,4 +83,4 @@ def hello():
 
 
 if __name__ == '__main__':
-    app.run(debug=False, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5000)
