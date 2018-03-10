@@ -1,4 +1,4 @@
-from __future__ import absolute_import,unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 from flask import Flask
 from flask_restful import Resource, Api
@@ -53,6 +53,8 @@ class DappContract(Resource):
     def get(self, dapp_id):
         contract = mongo.db.dapps.find_one(
             {'id': dapp_id}, {'_id': 0, 'address': 1})
+        contract = [
+            {'address': i, 'link': 'https://etherscan.io/address/{}'.format(i)} for i in contract]
         return {'data': contract}
 
 
@@ -74,10 +76,11 @@ api.add_resource(Dapp, '/api/dapps/<string:dapp_id>')
 api.add_resource(DappContract, '/api/dapps/<string:dapp_id>/contract')
 api.add_resource(DappTop, '/api/dapps/<string:dapp_id>/top')
 
+
 @celery.task
 def hello():
     print('hello')
 
 
 if __name__ == '__main__':
-    app.run(debug=False, host='0.0.0.0', post=6000)
+    app.run(debug=False, host='0.0.0.0', port=5000)
