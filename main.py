@@ -81,8 +81,8 @@ def toploss(df1, df2, top=10):
         df3[i] = address_Input_Data(df1, i)
     if len(df1['to'].value_counts().index):
         userToContract(df3, contract_address=df1['to'].value_counts().index[0])
-    return {'loss': toploss_tolist(df3[df3.values < 0].sort_values()[:top]),
-            'win': toploss_tolist(df3[df3.values > 0].sort_values(ascending=True)[:top])}
+    return {'loss': toploss_tolist(df3[df3.values < 0].sort_values(ascending=True)[:top]),
+            'win': toploss_tolist(df3[df3.values > 0].sort_values(ascending=False)[:top])}
 
 
 def userToContract(df, contract_address):
