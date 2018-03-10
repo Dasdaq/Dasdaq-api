@@ -166,14 +166,14 @@ def run():
         ret['h1'] = h1
         ret['d1'] = d1
         ret['d7'] = d7
-        # savetomongo(data=ret, dbname='dapps', key='_id')
+        savetomongo(data=ret, dbname='dapps', key='_id')
 
         # 玩家盈利情况
         yl = toploss(df1, df2)
         yl['contract'] = contract_address
-        # savetomongo(data=yl, dbname='top', key='contract')
-    print(USER_CONTRACT)
-    print(1)
+        savetomongo(data=yl, dbname='top', key='contract')
+    db['usercontract'].drop()
+    db['usercontract'].insert_one(USER_CONTRACT)
 
 
 if __name__ == '__main__':
