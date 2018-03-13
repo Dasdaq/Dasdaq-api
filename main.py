@@ -4,8 +4,6 @@ from pymongo import MongoClient
 from collections import defaultdict
 
 db = MongoClient()['dapdap']
-global USER_CONTRACT
-USER_CONTRACT = defaultdict(list)
 
 
 def coverStrToFloat(df, internal=False):
@@ -17,6 +15,7 @@ def coverStrToFloat(df, internal=False):
 
 
 def x(df, dt=None, day=False):
+    '返回给定数据中的玩家人数，花费金额...等数据'
     # 玩家人数
     plays = len(df['from'].value_counts().index)
     # 花费总金额
@@ -79,23 +78,39 @@ def toploss(df1, df2, top=10):
     df3 = x2 - x1
     for i in df3[df3.isnull()].index:
         df3[i] = address_Input_Data(df1, i)
-    if len(df1['to'].value_counts().index):
-        userToContract(df3, contract_address=df1['to'].value_counts().index[0])
-    return {'loss': toploss_tolist(df3[df3.values < 0].sort_values(ascending=True)[:top]),
-            'win': toploss_tolist(df3[df3.values > 0].sort_values(ascending=False)[:top])}
+
+    return {"data": toploss_tolist(df3)}
+
+def userToContract():
+    '返回每个用户玩的每个合约情况'
+    db = MongoClient()['dapdap']
+    user_contract = defaultdict(list)
+    contracts = db['top'].find({}, {'_id': 0})
+    for i in contracts:
+        for x in i['data']:
+            user_contract[x['address']].append({'id': i['id'], 'title': i['title'], 'value': x['value']})
+    db['usercontract'].drop()
+    db['usercontract'].insert_one(user_contract)
 
 
-def userToContract(df, contract_address):
-    '用户参加的所有合约'
-    for i in df.index:
-        USER_CONTRACT[i].append({'address': contract_address, 'value': df[i]})
+def playsTop():
+    db = MongoClient()['dapdap']
+    p = db['usercontract'].find_one({}, {'_id': 0})
+    total_x = []
+    for i in p:
+        sum_ = sum(x['value'] for x in p[i])
+        max_ = max(p[i], key=lambda x: x['value'])
+        total_x.append({'sum': sum_, 'address': i,
+                        'id': max_['id'], 'value': max_['value'], 'title': max_['title']})
+    total_x = sorted(total_x, key=lambda x: x['sum'], reverse=True)
+    savetomongo(total_x, 'topuser', 'address')
 
 
 def toploss_tolist(df):
     '把Series 数据转成list'
     ret = []
-    for i, (k, v) in enumerate(df.to_dict().items(), 1):
-        ret.append({'index': i, 'address': k, 'value': v})
+    for k, v in df.to_dict().items():
+        ret.append({'address': k, 'value': v})
     return ret
 
 
@@ -137,50 +152,59 @@ def run():
                                              })))
     df5 = init_df(df5)
     # 所有的合约
-    a = list(db['dapps'].find({}, {'id': 1, 'address': 1}))
+    a = list(db['dapps'].find({}, {'id': 1, 'address': 1, '_id': 0, "title": 1}))
     for i in a:
+        # 筛选出某个游戏的所有交易记录（可能包括多个合约）
         df_ = df5[df5.address.isin(i['address'])]
-        _id = i['id']
-        df1 = df_[df_.action == 'txlist']
-        df2 = df_[df_.action == 'txlistinternal']
+        if not df_.empty:
+            _id = i['id']
+            # 普通交易记录
+            df1 = df_[df_.action == 'txlist']
+            # 内部交易记录
+            df2 = df_[df_.action == 'txlistinternal']
 
-        # 游戏总体情况
-        ret = x(df1)
-        # 更新数据库的时间
-        ret['updatedAt'] = arrow.utcnow().format(r'YYYY-MM-DD HH:mm:ss')
-        ret['id'] = _id
+            # 游戏总体情况
+            ret = x(df1)
+            # 更新数据库的时间
+            ret['updatedAt'] = arrow.utcnow().format(r'YYYY-MM-DD HH:mm:ss')
+            ret['id'] = _id
 
-        # 1h的数据，按每分钟分割
-        start_time, end_time = lastxxt('1h')
-        m1 = pd.date_range(start_time, end_time, freq='T')
-        h1 = dateRange(df1, m1, day=False)
-        # 1d的数据，安
-        start_time, end_time = lastxxt('1d')
-        df1d = df1[(df1['t'] > start_time) & (df1['t'] <= end_time)]
-        ret['volumeLastDay'] = df1d.value.sum() / 1e+18
-        ret['txLastDay'] = len(df1d)
-        ret['dauLastDay'] = len(df1d['from'].value_counts().index)
-        _ = pd.date_range(start_time, end_time, freq='H')
-        d1 = dateRange(df1, _, day=False)
-        # 7d
-        start_time, end_time = lastxxt('7d')
-        df7d = df1[(df1['t'] > start_time) & (df1['t'] <= end_time)]
-        ret['volumeLastWeek'] = df7d.value.sum() / 1e+18
-        ret['txLastWeek'] = len(df7d)
-        _ = pd.date_range(start_time, end_time, freq='D')
-        d7 = dateRange(df1, _, day=True)
+            # 1h的数据，按每分钟分割
+            start_time, end_time = lastxxt('1h')
+            _ = pd.date_range(start_time, end_time, freq='T')
+            h1 = dateRange(df1, _, day=False)
+            # 1d的数据,按每小时分割
+            start_time, end_time = lastxxt('1d')
+            _ = pd.date_range(start_time, end_time, freq='H')
+            d1 = dateRange(df1, _, day=False)
+            # 一天的总体运营情况
+            df1d = df1[(df1['t'] > start_time) & (df1['t'] <= end_time)]
+            ret['volumeLastDay'] = df1d.value.sum() / 1e+18
+            ret['txLastDay'] = len(df1d)
+            ret['dauLastDay'] = len(df1d['from'].value_counts().index)
+            # 7d的数据，按每天分割
+            start_time, end_time = lastxxt('7d')
+            _ = pd.date_range(start_time, end_time, freq='D')
+            d7 = dateRange(df1, _, day=True)
+            # 7天内的总体运营情况
+            df7d = df1[(df1['t'] > start_time) & (df1['t'] <= end_time)]
+            ret['volumeLastWeek'] = df7d.value.sum() / 1e+18
+            ret['txLastWeek'] = len(df7d)
 
-        ret['h1'] = h1
-        ret['d1'] = d1
-        ret['d7'] = d7
-        savetomongo(data=ret, dbname='dapps', key='id')
+            ret['h1'] = h1
+            ret['d1'] = d1
+            ret['d7'] = d7
+            savetomongo(data=ret, dbname='dapps', key='id')
 
-        # 玩家盈利情况
-        yl = toploss(df1, df2)
-        yl['id'] = _id
-        savetomongo(data=yl, dbname='top', key='id')
-    db['usercontract'].drop()
-    db['usercontract'].insert_one(USER_CONTRACT)
+            # 玩家盈利情况
+            yl = toploss(df1, df2)
+            yl['id'] = _id
+            yl['title'] = i['title']
+            savetomongo(data=yl, dbname='top', key='id')
+    # 用户玩过哪些游戏
+    userToContract()
+    # 用户收益排行版
+    playsTop()
 
 
 if __name__ == '__main__':
