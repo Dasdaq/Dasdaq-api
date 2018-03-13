@@ -81,6 +81,7 @@ def toploss(df1, df2, top=10):
 
     return {"data": toploss_tolist(df3)}
 
+
 def userToContract():
     '返回每个用户玩的每个合约情况'
     db = MongoClient()['dapdap']
@@ -88,7 +89,7 @@ def userToContract():
     contracts = db['top'].find({}, {'_id': 0})
     for i in contracts:
         for x in i['data']:
-            user_contract[x['address']].append({'id': i['id'], 'title': i['title'], 'value': x['value']})
+            user_contract[x['address']].append({'id': i['id'], 'name': i['title'], 'value': x['value']})
     db['usercontract'].drop()
     db['usercontract'].insert_one(user_contract)
 
@@ -101,9 +102,11 @@ def playsTop():
         sum_ = sum(x['value'] for x in p[i])
         max_ = max(p[i], key=lambda x: x['value'])
         total_x.append({'sum': sum_, 'address': i,
-                        'id': max_['id'], 'value': max_['value'], 'title': max_['title']})
+                        'id': max_['id'], 'value': max_['value'], 'name': max_['name']})
     total_x = sorted(total_x, key=lambda x: x['sum'], reverse=True)
-    savetomongo(total_x, 'topuser', 'address')
+    db['topuser'].drop()
+    db['topuser'].insert_many(total_x)
+
 
 
 def toploss_tolist(df):
