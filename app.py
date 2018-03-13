@@ -6,6 +6,7 @@ from flask_cache import Cache
 from flask_pymongo import PyMongo
 from flask_cors import CORS
 from celery import Celery
+from ut import getBalance
 
 
 def make_celery(app):
@@ -83,7 +84,8 @@ class User(Resource):
         a = mongo.db.usercontract.find_one({}, {'_id': 0})
         if address in a:
             data = sorted(a[address], key=lambda x: x['value'], reverse=True)
-            return {'data': data, 'balance': 2.3, 'total': '1232324242424'}
+            total_x = sum(i['value'] for i in a[address])
+            return {'data': data, 'balance': getBalance(address), 'total': total_x}
         else:
             return {'error': {'code': -1, 'message': u'该地址没有玩过任何游戏'}}
 
@@ -94,11 +96,6 @@ class UserTop(Resource):
         a = mongo.db.topuser.find({}, {'_id': 0})
         data = sorted(a, key=lambda x: x['sum'], reverse=True)
         return {'data': data}
-
-
-def getBalance(address):
-    # todo:获取用户余额
-    return ''
 
 
 api.add_resource(Dapps, '/api/dapps')
