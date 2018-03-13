@@ -30,7 +30,7 @@ CORS(app)
 app.config.from_pyfile('config.py')
 api = Api(app)
 mongo = PyMongo(app)
-cache = Cache(app, config={'CACHE_TYPE': 'simple'})
+cache = Cache(app, config={'CACHE_TYPE': 'redis'})
 celery = make_celery(app)
 
 
