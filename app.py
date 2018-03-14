@@ -100,12 +100,12 @@ class UserTop(Resource):
         return {'data': data}
 
 
-api.add_resource(Dapps, '/api/dapps')
-api.add_resource(Dapp, '/api/dapps/<string:dapp_id>')
-api.add_resource(DappContract, '/api/dapps/<string:dapp_id>/contract')
-api.add_resource(DappTop, '/api/dapps/<string:dapp_id>/top')
-api.add_resource(User, '/api/user/<string:address>')
-api.add_resource(UserTop, '/api/user')
+api.add_resource(Dapps, '/dapps')
+api.add_resource(Dapp, '/dapps/<string:dapp_id>')
+api.add_resource(DappContract, '/dapps/<string:dapp_id>/contract')
+api.add_resource(DappTop, '/dapps/<string:dapp_id>/top')
+api.add_resource(User, '/user/<string:address>')
+api.add_resource(UserTop, '/user')
 
 
 @celery.task
