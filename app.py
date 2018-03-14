@@ -41,7 +41,8 @@ class Dapps(Resource):
     @cache.cached(timeout=60 * 5)
     def get(self):
         dapp = mongo.db.dapps.find({}, {'_id': 0, 'address': 0, 'h1': 0, 'd1': 0, 'd7': 0})
-        return {'data': list(dapp)}
+
+        return {'data': sorted(dapp, key=lambda x: x['dauLastDay'], reverse=True)}
 
 
 class Dapp(Resource):
