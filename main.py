@@ -2,6 +2,7 @@ import pandas as pd
 import arrow
 from pymongo import MongoClient
 from collections import defaultdict
+from ut import getBalance
 
 db = MongoClient()['dapdap']
 
@@ -108,7 +109,6 @@ def playsTop():
     db['topuser'].insert_many(total_x)
 
 
-
 def toploss_tolist(df):
     '把Series 数据转成list'
     ret = []
@@ -143,6 +143,18 @@ def lastxxt(t):
     start_time = start_time.format(r'YYYY-MM-DD HH:mm:ss')
     end_time = end_time.format(r'YYYY-MM-DD HH:mm:ss')
     return start_time, end_time
+
+
+def updateContractBalance():
+    '更新合约的余额'
+    client = db['dapps']
+    a = client.find({}, {'_id': 0, 'id': 1, 'address': 1})
+    for i in a:
+        balance = 0
+        for _address in i['address']:
+            balance += getBalance(_address)
+        savetomongo(data={'id': i['id'], 'balance': balance}, dbname='dapps',
+                    key='id')
 
 
 def run():
@@ -211,4 +223,4 @@ def run():
 
 
 if __name__ == '__main__':
-    run()
+    updateContractBalance()
