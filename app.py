@@ -27,7 +27,7 @@ def make_celery(app):
 
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/api/*": {"origins": ["dapdap.io/*", "www.dapdap.io/*"]}})
 app.config.from_pyfile('config.py')
 api = Api(app)
 mongo = PyMongo(app)
