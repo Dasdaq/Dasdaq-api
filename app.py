@@ -7,6 +7,7 @@ from flask_pymongo import PyMongo
 from flask_cors import CORS
 from celery import Celery
 from ut import getBalance
+from main import updateContractBalance
 
 
 def make_celery(app):
@@ -110,8 +111,9 @@ api.add_resource(UserTop, '/user')
 
 
 @celery.task
-def hello():
-    print('hello')
+def upcontract():
+    '每5分钟更新一次合约内的余额'
+    updateContractBalance()
 
 
 def sortTop(data):

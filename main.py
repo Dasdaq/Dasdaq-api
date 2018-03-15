@@ -91,7 +91,8 @@ def userToContract():
     contracts = db['top'].find({}, {'_id': 0})
     for i in contracts:
         for x in i['data']:
-            user_contract[x['address']].append({'id': i['id'], 'name': i['title'], 'value': x['value']})
+            user_contract[x['address']].append(
+                {'id': i['id'], 'name': i['title'], 'value': x['value']})
     db['usercontract'].drop()
     db['usercontract'].insert_one(user_contract)
 
@@ -186,7 +187,8 @@ def run():
                                              })))
     df5 = init_df(df5)
     # 所有的合约
-    a = list(db['dapps'].find({}, {'id': 1, 'address': 1, '_id': 0, "title": 1}))
+    a = list(db['dapps'].find(
+        {}, {'id': 1, 'address': 1, '_id': 0, "title": 1}))
     for i in a:
         # 筛选出某个游戏的所有交易记录（可能包括多个合约）
         df_ = df5[df5.address.isin(i['address'])]

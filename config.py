@@ -2,11 +2,11 @@ from datetime import timedelta
 
 CELERYBEAT_SCHEDULE = {
     'every-minute': {
-        'task': 'app.hello',
-        'schedule': timedelta(seconds=30)
+        'task': 'app.upcontract',
+        'schedule': timedelta(seconds=60 * 5)
     },
 }
-MONGO_URI = 'mongodb://dapdap:dapdapmima123@127.0.0.1:27017/dapdap'
+MONGO_URI = 'mongodb://dapdap:dapdapmima123@172.31.135.89:27017/dapdap'
 CELERY_BROKER_URL = 'redis://localhost:6379',
 CELERY_RESULT_BACKEND = 'redis://localhost:6379'
 CACHE_REDIS_HOST = '127.0.0.1'
