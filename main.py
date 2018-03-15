@@ -5,7 +5,7 @@ from collections import defaultdict
 from ut import getBalance
 import redis
 
-db = MongoClient()['dapdap']
+db = MongoClient(host='172.31.135.89')['dapdap']
 db.authenticate('dapdap', 'dapdapmima123')
 
 
