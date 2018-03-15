@@ -3,8 +3,10 @@ import arrow
 from pymongo import MongoClient
 from collections import defaultdict
 from ut import getBalance
+import redis
 
 db = MongoClient()['dapdap']
+db.authenticate('dapdap', 'dapdapmima123')
 
 
 def coverStrToFloat(df, internal=False):
@@ -85,7 +87,6 @@ def toploss(df1, df2, top=10):
 
 def userToContract():
     '返回每个用户玩的每个合约情况'
-    db = MongoClient()['dapdap']
     user_contract = defaultdict(list)
     contracts = db['top'].find({}, {'_id': 0})
     for i in contracts:
@@ -96,7 +97,6 @@ def userToContract():
 
 
 def playsTop():
-    db = MongoClient()['dapdap']
     p = db['usercontract'].find_one({}, {'_id': 0})
     total_x = []
     for i in p:
@@ -155,6 +155,25 @@ def updateContractBalance():
             balance += getBalance(_address)
         savetomongo(data={'id': i['id'], 'balance': balance}, dbname='dapps',
                     key='id')
+
+
+def getMaxBlockNumber():
+    '返回每个合约地址最大的block number'
+    url = 'http://api.etherscan.io/api?module=account&action={}&address={}&startblock={}' \
+          '&endblock=99999999&sort=asc&apikey=YourApiKeyToken'
+    urls = []
+    r = redis.Redis(host='39.108.11.148', password='redismima123')
+    client = db['tokens']
+    df = pd.DataFrame(list(client.find({}, {'_id': 0, 'blockNumber': 1,
+                                            'address': 1, 'action': 1, })))
+    df1 = df[df.action == 'txlist']
+    df2 = df[df.action == 'txlistinternal']
+    for address, blocknumber in df1[['blockNumber']].groupby(df1.address).max().to_dict()['blockNumber'].items():
+        urls.append(url.format('txlist', address, blocknumber))
+    for address, blocknumber in df2[['blockNumber']].groupby(df2.address).max().to_dict()['blockNumber'].items():
+        urls.append(url.format('txlistinternal', address, blocknumber))
+    # 把数据更新进redis，然后爬虫直接从里面拿数据
+    r.sadd('contract', *urls)
 
 
 def run():
@@ -223,4 +242,4 @@ def run():
 
 
 if __name__ == '__main__':
-    updateContractBalance()
+    run()
