@@ -43,7 +43,7 @@ class Dapps(Resource):
     def get(self):
         dapp = mongo.db.dapps.find({}, {'_id': 0, 'address': 0, 'h1': 0, 'd1': 0, 'd7': 0})
 
-        return {'data': sorted(dapp, key=lambda x: x['dauLastDay'], reverse=True)}
+        return {'data': sorted(dapp, key=lambda x: int(x['dauLastDay']), reverse=True)}
 
 
 class Dapp(Resource):
