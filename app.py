@@ -45,7 +45,7 @@ parser.add_argument('reverse')
 class Dapps(Resource):
     @cache.cached(timeout=60 * 5)
     def get(self):
-        dapp = mongo.db.dapps.find({}, {'_id': 0, 'address': 0, 'h1': 0, 'd1': 0, 'd7': 0})
+        dapp = mongo.db.dapps.find({}, {'_id': 0, 'address': 0, 'h1': 0, 'd1': 0, 'd7': 0, 'links': 0})
 
         return {'data': sorted(dapp, key=lambda x: int(x['dauLastDay']), reverse=True)}
 
@@ -112,7 +112,7 @@ class UserTop(Resource):
         return {'data': list(data)}
 
     def __repr__(self):
-        return "%s(%s)" % (self.__class__.__name__,parser.parse_args() )
+        return "%s(%s)" % (self.__class__.__name__, parser.parse_args())
 
 
 api.add_resource(Dapps, '/dapps')
