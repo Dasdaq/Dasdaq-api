@@ -8,6 +8,7 @@ from flask_cors import CORS
 from celery import Celery
 from ut import getBalance
 from main import updateContractBalance
+import pymongo
 
 
 def make_celery(app):
@@ -89,17 +90,20 @@ class User(Resource):
         if address in a:
             data = sorted(a[address], key=lambda x: x['value'], reverse=True)
             total_x = sum(i['value'] for i in a[address])
-            return {'data': data, 'balance': getBalance(address), 'total': total_x}
+            total_rank = mongo.db.topuser.count()
+            rank = mongo.db.topuser.find_one({'address': address}, {'_id': 0, 'rank': 1})
+            return {'data': data, 'balance': getBalance(address), 'total': total_x,
+                    'rank': rank['rank'], 'total_rank': total_rank}
         else:
             return {'error': {'code': -1, 'message': u'该地址没有玩过任何游戏'}}
 
 
 class UserTop(Resource):
+    
     @cache.cached(timeout=60 * 5)
     def get(self):
-        a = mongo.db.topuser.find({}, {'_id': 0})
-        data = sorted(a, key=lambda x: x['sum'], reverse=True)
-        return {'data': data}
+        data = mongo.db.topuser.find({}, {'_id': 0}).sort("rank", pymongo.ASCENDING).limit(100)
+        return {'data': list(data)}
 
 
 api.add_resource(Dapps, '/dapps')
