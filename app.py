@@ -1,7 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 from flask import Flask
-from flask_restful import Resource, Api
+from flask_restful import Resource, Api, reqparse
 from flask_cache import Cache
 from flask_pymongo import PyMongo
 from flask_cors import CORS
@@ -37,6 +37,9 @@ api = Api(app)
 mongo = PyMongo(app)
 cache = Cache(app, config={'CACHE_TYPE': 'redis'})
 celery = make_celery(app)
+
+parser = reqparse.RequestParser()
+parser.add_argument('reverse')
 
 
 class Dapps(Resource):
@@ -99,11 +102,17 @@ class User(Resource):
 
 
 class UserTop(Resource):
-    
-    @cache.cached(timeout=60 * 5)
+    @cache.memoize(timeout=60 * 5)
     def get(self):
-        data = mongo.db.topuser.find({}, {'_id': 0}).sort("rank", pymongo.ASCENDING).limit(100)
+        args = parser.parse_args()
+        if args['reverse'] == 'true':
+            data = mongo.db.topuser.find({}, {'_id': 0}).sort("rank", pymongo.DESCENDING).limit(100)
+        else:
+            data = mongo.db.topuser.find({}, {'_id': 0}).sort("rank", pymongo.ASCENDING).limit(100)
         return {'data': list(data)}
+
+    def __repr__(self):
+        return "%s(%s)" % (self.__class__.__name__,parser.parse_args() )
 
 
 api.add_resource(Dapps, '/dapps')
