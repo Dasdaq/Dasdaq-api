@@ -106,6 +106,8 @@ def playsTop():
         total_x.append({'sum': sum_, 'address': i,
                         'id': max_['id'], 'value': max_['value'], 'name': max_['name']})
     total_x = sorted(total_x, key=lambda x: x['sum'], reverse=True)
+    for index, i in enumerate(total_x, 1):
+        i['rank'] = index
     db['topuser'].drop()
     db['topuser'].insert_many(total_x)
 
