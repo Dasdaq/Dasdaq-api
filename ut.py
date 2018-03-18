@@ -1,6 +1,6 @@
 from web3 import Web3, HTTPProvider
 
-web3 = Web3(HTTPProvider('https://node.web3api.com/'))
+web3 = Web3(HTTPProvider('https://mainnet.infura.io/D7qVYwcifGfuGYBN92qw'))
 
 
 def getBalance(address):
@@ -9,4 +9,4 @@ def getBalance(address):
 
 
 if __name__ == '__main__':
-    print(getBalance('0xeC1FAaD0Ae9aD83279f99eEd2CBfF9f1C8dc4550'))
+    print(getBalance('0xc7069173721f6cd6322ce61f5912b31315c40fc2'))
