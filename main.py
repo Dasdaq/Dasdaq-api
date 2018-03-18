@@ -78,9 +78,11 @@ def toploss(df1, df2, top=10):
     x1 = df1['total_price'].groupby(df1['from']).sum()
     x2 = df2['value'].groupby(df2['to']).sum()
 
-    df3 = x2 - x1
-    for i in df3[df3.isnull()].index:
-        df3[i] = address_Input_Data(df1, i)
+    df3 = x2.sub(x1, fill_value=0)
+    # for i in df3[df3.isnull()].index:
+    #     # 判断该用户是否是 第一次玩这个游戏
+    #     if db['top'].find({"data.address": {"id": gameid, "$in": [i]}}).count():
+    #         del df3[i]
 
     return {"data": toploss_tolist(df3)}
 
@@ -182,9 +184,11 @@ def getMaxBlockNumber():
 def run():
     client = db['tokens']
     df5 = pd.DataFrame(list(client.find({}, {'_id': 0, 'blockHash': 0, 'blockNumber': 0,
-                                             'confirmations': 0, 'contractAddress': 0, 'cumulativeGasUsed': 0,
+                                             'confirmations': 0, 'contractAddress': 0,
+                                             'cumulativeGasUsed': 0,
                                              'hash': 0, 'input': 0,
-                                             'nonce': 0, 'traceId': 0, "transactionIndex": 0,
+                                             'nonce': 0, 'traceId': 0,
+                                             "transactionIndex": 0,
                                              "txreceipt_status": 0, "type": 0
                                              })))
     df5 = init_df(df5)
