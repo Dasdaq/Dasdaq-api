@@ -45,7 +45,8 @@ parser.add_argument('reverse')
 class Dapps(Resource):
     @cache.cached(timeout=60 * 5)
     def get(self):
-        dapp = mongo.db.dapps.find({}, {'_id': 0, 'address': 0, 'h1': 0, 'd1': 0, 'd7': 0, 'links': 0})
+        dapp = mongo.db.dapps.find(
+            {}, {'_id': 0, 'address': 0, 'h1': 0, 'd1': 0, 'd7': 0, 'links': 0})
 
         return {'data': sorted(dapp, key=lambda x: int(x['dauLastDay']), reverse=True)}
 
@@ -94,7 +95,8 @@ class User(Resource):
             data = sorted(a[address], key=lambda x: x['value'], reverse=True)
             total_x = sum(i['value'] for i in a[address])
             total_rank = mongo.db.topuser.count()
-            rank = mongo.db.topuser.find_one({'address': address}, {'_id': 0, 'rank': 1})
+            rank = mongo.db.topuser.find_one(
+                {'address': address}, {'_id': 0, 'rank': 1})
             return {'data': data, 'balance': getBalance(address), 'total': total_x,
                     'rank': rank['rank'], 'total_rank': total_rank}
         else:
@@ -106,9 +108,11 @@ class UserTop(Resource):
     def get(self):
         args = parser.parse_args()
         if args['reverse'] == 'true':
-            data = mongo.db.topuser.find({}, {'_id': 0}).sort("rank", pymongo.DESCENDING).limit(100)
+            data = mongo.db.topuser.find({}, {'_id': 0}).sort(
+                "rank", pymongo.DESCENDING).limit(100)
         else:
-            data = mongo.db.topuser.find({}, {'_id': 0}).sort("rank", pymongo.ASCENDING).limit(100)
+            data = mongo.db.topuser.find({}, {'_id': 0}).sort(
+                "rank", pymongo.ASCENDING).limit(100)
         return {'data': list(data)}
 
     def __repr__(self):
