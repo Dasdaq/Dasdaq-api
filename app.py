@@ -7,7 +7,7 @@ from flask_pymongo import PyMongo
 from flask_cors import CORS
 from celery import Celery
 from ut import getBalance
-from main import updateContractBalance
+from main import updateContractBalance, run, getMaxBlockNumber
 import pymongo
 
 
@@ -131,6 +131,18 @@ api.add_resource(UserTop, '/user')
 def upcontract():
     '每5分钟更新一次合约内的余额'
     updateContractBalance()
+
+
+@celery.task
+def getmaxblock():
+    '每小时把最新的链接插入redis'
+    getMaxBlockNumber()
+
+
+@celery.task
+def run_daily():
+    '每小时跑一次数据'
+    run()
 
 
 def sortTop(data):

@@ -4,6 +4,12 @@ CELERYBEAT_SCHEDULE = {
     'every-minute': {
         'task': 'app.upcontract',
         'schedule': timedelta(seconds=60 * 5)
+    }, 'every-hour': {
+        'task': 'app.getmaxblock',
+        'schedule': timedelta(seconds=60 * 55)
+    }, 'every-hour1': {
+        'task': 'app.run_daily',
+        'schedule': timedelta(seconds=60 * 60)
     },
 }
 MONGO_URI = 'mongodb://dapdap:dapdapmima123@172.31.135.89:27017/dapdap'
