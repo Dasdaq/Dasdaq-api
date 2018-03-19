@@ -291,4 +291,4 @@ def run_yl():
 
 
 if __name__ == '__main__':
-    getMaxBlockNumber()
+    run()
