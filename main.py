@@ -73,18 +73,25 @@ def address_Input_Data(df, address):
     return -df[df['from'] == address].total_price.sum()
 
 
-def toploss(df1, df2, top=10):
+def toploss(df1, df2, gameid, top=10):
     '返回某个合约赢的最多与输的最多的人'
     x1 = df1['total_price'].groupby(df1['from']).sum()
     x2 = df2['value'].groupby(df2['to']).sum()
-
+    # 本次查出来的玩家情况
     df3 = x2.sub(x1, fill_value=0)
-    # for i in df3[df3.isnull()].index:
-    #     # 判断该用户是否是 第一次玩这个游戏
-    #     if db['top'].find({"data.address": {"id": gameid, "$in": [i]}}).count():
-    #         del df3[i]
 
-    return {"data": toploss_tolist(df3)}
+    # 之前玩家情况
+    q = db['top'].find_one({'id': gameid})
+    if q:
+        df4 = pd.DataFrame(df3, columns=['value'])
+        df5 = pd.DataFrame(q['data'])
+        df5.index = df5.address
+        del df5['address']
+        # 两次相加
+        df6 = df4.add(df5, fill_value=0)
+        return {"data": toploss_tolist(df6)}
+    else:
+        return {"data": toploss_tolist(df3, value=False)}
 
 
 def userToContract():
@@ -110,14 +117,20 @@ def playsTop():
     total_x = sorted(total_x, key=lambda x: x['sum'], reverse=True)
     for index, i in enumerate(total_x, 1):
         i['rank'] = index
-    db['topuser'].drop()
-    db['topuser'].insert_many(total_x)
+    if total_x:
+        db['topuser'].drop()
+        db['topuser'].insert_many(total_x)
+        db['topuser'].create_index('address', unique=True)
 
 
-def toploss_tolist(df):
+def toploss_tolist(df, value=True):
     '把Series 数据转成list'
+    if value:
+        d = df['value'].iteritems()
+    else:
+        d = df.iteritems()
     ret = []
-    for k, v in df.to_dict().items():
+    for k, v in d:
         ret.append({'address': k, 'value': v})
     return ret
 
@@ -168,29 +181,32 @@ def getMaxBlockNumber():
           '&endblock=99999999&sort=asc&apikey=YourApiKeyToken'
     urls = []
     r = redis.Redis(host='39.108.11.148', password='redismima123')
-    client = db['tokens']
-    df = pd.DataFrame(list(client.find({}, {'_id': 0, 'blockNumber': 1,
-                                            'address': 1, 'action': 1, })))
-    df1 = df[df.action == 'txlist']
-    df2 = df[df.action == 'txlistinternal']
-    for address, blocknumber in df1[['blockNumber']].groupby(df1.address).max().to_dict()['blockNumber'].items():
-        urls.append(url.format('txlist', address, blocknumber))
-    for address, blocknumber in df2[['blockNumber']].groupby(df2.address).max().to_dict()['blockNumber'].items():
-        urls.append(url.format('txlistinternal', address, blocknumber))
-    # 把数据更新进redis，然后爬虫直接从里面拿数据
-    r.sadd('contract', *urls)
+    if not r.scard('contract'):
+        client = db['tokens']
+        df = pd.DataFrame(list(client.find({}, {'_id': 0, 'blockNumber': 1,
+                                                'address': 1, 'action': 1, })))
+        df1 = df[df.action == 'txlist']
+        df2 = df[df.action == 'txlistinternal']
+        for address, blocknumber in df1[['blockNumber']].groupby(df1.address).max().to_dict()['blockNumber'].items():
+            urls.append(url.format('txlist', address, blocknumber))
+        for address, blocknumber in df2[['blockNumber']].groupby(df2.address).max().to_dict()['blockNumber'].items():
+            urls.append(url.format('txlistinternal', address, blocknumber))
+        # 把数据更新进redis，然后爬虫直接从里面拿数据
+        r.sadd('contract', *urls)
 
 
 def run():
+    '每小时更新一次，更新7天内的数据'
+    d7ago = arrow.utcnow().replace(days=-7).timestamp
     client = db['tokens']
-    df5 = pd.DataFrame(list(client.find({}, {'_id': 0, 'blockHash': 0, 'blockNumber': 0,
-                                             'confirmations': 0, 'contractAddress': 0,
-                                             'cumulativeGasUsed': 0,
-                                             'hash': 0, 'input': 0,
-                                             'nonce': 0, 'traceId': 0,
-                                             "transactionIndex": 0,
-                                             "txreceipt_status": 0, "type": 0
-                                             })))
+    df5 = pd.DataFrame(list(client.find({"timeStamp": {"$gt": str(d7ago)}}, {'_id': 0, 'blockHash': 0, 'blockNumber': 0,
+                                                                             'confirmations': 0, 'contractAddress': 0,
+                                                                             'cumulativeGasUsed': 0,
+                                                                             'hash': 0, 'input': 0,
+                                                                             'nonce': 0, 'traceId': 0,
+                                                                             "transactionIndex": 0,
+                                                                             "txreceipt_status": 0, "type": 0
+                                                                             })))
     df5 = init_df(df5)
     # 所有的合约
     a = list(db['dapps'].find(
@@ -238,8 +254,33 @@ def run():
             ret['d7'] = d7
             savetomongo(data=ret, dbname='dapps', key='id')
 
+
+def run_yl():
+    d7ago = '1521030065'
+    client = db['tokens']
+    df5 = pd.DataFrame(list(client.find({"timeStamp": {"$gt": str(d7ago)}}, {'_id': 0, 'blockHash': 0, 'blockNumber': 0,
+                                                                             'confirmations': 0, 'contractAddress': 0,
+                                                                             'cumulativeGasUsed': 0,
+                                                                             'hash': 0, 'input': 0,
+                                                                             'nonce': 0, 'traceId': 0,
+                                                                             "transactionIndex": 0,
+                                                                             "txreceipt_status": 0, "type": 0
+                                                                             })))
+    df5 = init_df(df5)
+    # 所有的合约
+    a = list(db['dapps'].find(
+        {}, {'id': 1, 'address': 1, '_id': 0, "title": 1}))
+    for i in a:
+        # 筛选出某个游戏的所有交易记录（可能包括多个合约）
+        df_ = df5[df5.address.isin(i['address'])]
+        if not df_.empty:
+            _id = i['id']
+            # 普通交易记录
+            df1 = df_[df_.action == 'txlist']
+            # 内部交易记录
+            df2 = df_[df_.action == 'txlistinternal']
             # 玩家盈利情况
-            yl = toploss(df1, df2)
+            yl = toploss(df1, df2, _id)
             yl['id'] = _id
             yl['title'] = i['title']
             savetomongo(data=yl, dbname='top', key='id')
@@ -250,4 +291,4 @@ def run():
 
 
 if __name__ == '__main__':
-    run()
+    getMaxBlockNumber()
