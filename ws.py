@@ -24,7 +24,7 @@ async def hello():
         while True:
             await xt()
             greeting = json.loads(await websocket.recv())
-            print("< {}".format(greeting))
+            # print("< {}".format(greeting))
             if 'address' in greeting:
                 await save2mongo(greeting)
 
