@@ -8,5 +8,9 @@ def getBalance(address):
     return web3.eth.getBalance(address) / 1e+18
 
 
+def getblockNumber():
+    return web3.eth.blockNumber
+
+
 if __name__ == '__main__':
-    print(getBalance('0xc7069173721f6cd6322ce61f5912b31315c40fc2'))
+    print(getblockNumber())
