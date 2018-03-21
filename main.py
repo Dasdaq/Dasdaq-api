@@ -6,6 +6,7 @@ from ut import getBalance
 import redis
 
 db = MongoClient(host='172.31.135.89')['dapdap']
+# db = MongoClient()['dapdap']
 db.authenticate('dapdap', 'dapdapmima123')
 
 
@@ -103,16 +104,16 @@ def userToContract():
             user_contract[x['address']].append(
                 {'id': i['id'], 'name': i['title'], 'value': x['value']})
     db['usercontract'].drop()
-    db['usercontract'].insert_one(user_contract)
+    db['usercontract'].insert_many([{'address': k, 'data': v} for k, v in user_contract.items()])
 
 
 def playsTop():
-    p = db['usercontract'].find_one({}, {'_id': 0})
+    p = db['usercontract'].find({}, {'_id': 0})
     total_x = []
     for i in p:
-        sum_ = sum(x['value'] for x in p[i])
-        max_ = max(p[i], key=lambda x: x['value'])
-        total_x.append({'sum': sum_, 'address': i,
+        sum_ = sum(x['value'] for x in i['data'])
+        max_ = max(i['data'], key=lambda x: x['value'])
+        total_x.append({'sum': sum_, 'address': i['address'],
                         'id': max_['id'], 'value': max_['value'], 'name': max_['name']})
     total_x = sorted(total_x, key=lambda x: x['sum'], reverse=True)
     for index, i in enumerate(total_x, 1):
