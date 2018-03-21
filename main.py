@@ -2,7 +2,7 @@ import pandas as pd
 import arrow
 from pymongo import MongoClient
 from collections import defaultdict
-from ut import getBalance
+from ut import getBalance, getblockNumber
 import redis
 
 db = MongoClient(host='172.31.135.89')['dapdap']
@@ -179,13 +179,15 @@ def updateContractBalance():
 def getMaxBlockNumber():
     '返回每个合约地址最大的block number'
     url = 'http://api.etherscan.io/api?module=account&action={}&address={}&startblock={}' \
-          '&endblock=99999999&sort=asc&apikey=YourApiKeyToken'
+          '&endblock=99999999&page=1&offset=1000&sort=asc&apikey=YourApiKeyToken'
     urls = []
+    maxBlockNumber = getblockNumber()
+    _BlockNumber = str(int(maxBlockNumber) - 60000)
     r = redis.Redis(host='39.108.11.148', password='redismima123')
     if not r.scard('contract'):
         client = db['tokens']
-        df = pd.DataFrame(list(client.find({}, {'_id': 0, 'blockNumber': 1,
-                                                'address': 1, 'action': 1, })))
+        df = pd.DataFrame(list(client.find({"blockNumber": {"$gt": _BlockNumber}}, {'_id': 0, 'blockNumber': 1,
+                                                                                    'address': 1, 'action': 1, })))
         df1 = df[df.action == 'txlist']
         df2 = df[df.action == 'txlistinternal']
         for address, blocknumber in df1[['blockNumber']].groupby(df1.address).max().to_dict()['blockNumber'].items():
@@ -194,6 +196,7 @@ def getMaxBlockNumber():
             urls.append(url.format('txlistinternal', address, blocknumber))
         # 把数据更新进redis，然后爬虫直接从里面拿数据
         r.sadd('contract', *urls)
+        # print(len(urls))
 
 
 def run():
@@ -219,11 +222,8 @@ def run():
             _id = i['id']
             # 普通交易记录
             df1 = df_[df_.action == 'txlist']
-            # 内部交易记录
-            df2 = df_[df_.action == 'txlistinternal']
 
-            # 游戏总体情况
-            ret = x(df1)
+            ret = {}
             # 更新数据库的时间
             ret['updatedAt'] = arrow.utcnow().format(r'YYYY-MM-DD HH:mm:ss')
             ret['id'] = _id
