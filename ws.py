@@ -46,7 +46,7 @@ async def save2mongo(r):
 if __name__ == '__main__':
     db = MongoClient()['dapdap']
     db.authenticate('dapdap', 'dapdapmima123')
-    client = db['ttt']
+    client = db['tokens']
     address = ['0x8d12a197cb00d4747a1fe03395095ce2a5cc6819',
                '0x2a0c0dbecc7e4d658f48e01e3fa353f44050c208',
                '0x06012c8cf97bead5deae237070f9587f8e7a266d',
