@@ -45,16 +45,17 @@ parser.add_argument('reverse')
 class Dapps(Resource):
     @cache.cached(timeout=60 * 5)
     def get(self):
-        dapp = mongo.db.dapps.find(
-            {}, {'_id': 0, 'address': 0, 'h1': 0, 'd1': 0, 'd7': 0, 'links': 0})
-        dapp = [item for item in dapp if item['title'] not in ['0xBitcoin', 'ForkDelta', 'CryptoKitties', 'IDEX', 'Etheroll', 'PoWH 3D']]
+        dapp = mongo.db.dapps.find({}, {'_id': 0, 'address': 0, 'h1': 0, 'd1': 0, 'd7': 0, 'links': 0})
+        dapp = [item for item in dapp if
+                item['title'] not in ['0xBitcoin', 'ForkDelta', 'CryptoKitties', 'IDEX', 'Etheroll', 'PoWH 3D']]
         return {'data': sorted(dapp, key=lambda x: int(x['dauLastDay']), reverse=True)}
+
 
 class Dapps2(Resource):
     @cache.cached(timeout=60 * 5)
     def get(self):
         dapp = mongo.db.dapps.find(
-_           {}, {'_id': 0, 'address': 0, 'h1': 0, 'd1': 0, 'd7': 0, 'links': 0})
+            {}, {'_id': 0, 'address': 0, 'h1': 0, 'd1': 0, 'd7': 0, 'links': 0})
         return {'data': sorted(dapp, key=lambda x: int(x['dauLastDay']), reverse=True)}
 
 
