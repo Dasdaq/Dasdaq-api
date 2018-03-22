@@ -2,10 +2,11 @@ import pandas as pd
 import arrow
 from pymongo import MongoClient
 from collections import defaultdict
-from ut import getBalance
+from ut import getBalance, getblockNumber
 import redis
 
 db = MongoClient(host='172.31.135.89')['dapdap']
+# db = MongoClient()['dapdap']
 db.authenticate('dapdap', 'dapdapmima123')
 
 
@@ -103,16 +104,16 @@ def userToContract():
             user_contract[x['address']].append(
                 {'id': i['id'], 'name': i['title'], 'value': x['value']})
     db['usercontract'].drop()
-    db['usercontract'].insert_one(user_contract)
+    db['usercontract'].insert_many([{'address': k, 'data': v} for k, v in user_contract.items()])
 
 
 def playsTop():
-    p = db['usercontract'].find_one({}, {'_id': 0})
+    p = db['usercontract'].find({}, {'_id': 0})
     total_x = []
     for i in p:
-        sum_ = sum(x['value'] for x in p[i])
-        max_ = max(p[i], key=lambda x: x['value'])
-        total_x.append({'sum': sum_, 'address': i,
+        sum_ = sum(x['value'] for x in i['data'])
+        max_ = max(i['data'], key=lambda x: x['value'])
+        total_x.append({'sum': sum_, 'address': i['address'],
                         'id': max_['id'], 'value': max_['value'], 'name': max_['name']})
     total_x = sorted(total_x, key=lambda x: x['sum'], reverse=True)
     for index, i in enumerate(total_x, 1):
@@ -178,21 +179,34 @@ def updateContractBalance():
 def getMaxBlockNumber():
     '返回每个合约地址最大的block number'
     url = 'http://api.etherscan.io/api?module=account&action={}&address={}&startblock={}' \
-          '&endblock=99999999&sort=asc&apikey=YourApiKeyToken'
+          '&endblock=99999999&page=1&offset=1000&sort=asc&apikey=YourApiKeyToken'
     urls = []
+    maxBlockNumber = getblockNumber()
+    # 不需要去跑的。走ws通道拿数据
+    block_address = ['0x8d12a197cb00d4747a1fe03395095ce2a5cc6819',
+                     '0x2a0c0dbecc7e4d658f48e01e3fa353f44050c208',
+                     '0x06012c8cf97bead5deae237070f9587f8e7a266d',
+                     '0xddf0d0b9914d530e0b743808249d9af901f1bd01',
+                     '0xb1690c08e213a35ed9bab7b318de14420fb57d8c',
+                     '0xc7af99fe5513eb6710e6d5f44f9989da40f27f26',
+                     '0xb3775fb83f7d12a36e0475abdd1fca35c091efbe',
+                     '0xb6ed7644c69416d67b522e20bc294a9a9b405b31', ]
+    _BlockNumber = str(int(maxBlockNumber) - 60000)
     r = redis.Redis(host='39.108.11.148', password='redismima123')
     if not r.scard('contract'):
         client = db['tokens']
-        df = pd.DataFrame(list(client.find({}, {'_id': 0, 'blockNumber': 1,
-                                                'address': 1, 'action': 1, })))
+        df = pd.DataFrame(list(client.find({"blockNumber": {"$gt": _BlockNumber}}, {'_id': 0, 'blockNumber': 1,
+                                                                                    'address': 1, 'action': 1, })))
         df1 = df[df.action == 'txlist']
         df2 = df[df.action == 'txlistinternal']
         for address, blocknumber in df1[['blockNumber']].groupby(df1.address).max().to_dict()['blockNumber'].items():
-            urls.append(url.format('txlist', address, blocknumber))
+            if address.lower() not in block_address:
+                urls.append(url.format('txlist', address, blocknumber))
         for address, blocknumber in df2[['blockNumber']].groupby(df2.address).max().to_dict()['blockNumber'].items():
             urls.append(url.format('txlistinternal', address, blocknumber))
         # 把数据更新进redis，然后爬虫直接从里面拿数据
         r.sadd('contract', *urls)
+        # print(len(urls))
 
 
 def run():
@@ -218,11 +232,8 @@ def run():
             _id = i['id']
             # 普通交易记录
             df1 = df_[df_.action == 'txlist']
-            # 内部交易记录
-            df2 = df_[df_.action == 'txlistinternal']
 
-            # 游戏总体情况
-            ret = x(df1)
+            ret = {}
             # 更新数据库的时间
             ret['updatedAt'] = arrow.utcnow().format(r'YYYY-MM-DD HH:mm:ss')
             ret['id'] = _id

@@ -97,10 +97,10 @@ class DappTop(Resource):
 class User(Resource):
     @cache.cached(timeout=60 * 5)
     def get(self, address):
-        a = mongo.db.usercontract.find_one({}, {'_id': 0})
-        if address in a:
-            data = sorted(a[address], key=lambda x: x['value'], reverse=True)
-            total_x = sum(i['value'] for i in a[address])
+        a = mongo.db.usercontract.find_one({'address': address}, {'_id': 0})
+        if a:
+            data = sorted(a['data'], key=lambda x: x['value'], reverse=True)
+            total_x = sum(i['value'] for i in a['data'])
             total_rank = mongo.db.topuser.count()
             rank = mongo.db.topuser.find_one(
                 {'address': address}, {'_id': 0, 'rank': 1})
