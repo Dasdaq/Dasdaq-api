@@ -11,7 +11,7 @@ from pymongo import MongoClient
 async def hello():
     async def xt():
         name = {"event": "ping"}
-        time.sleep(10)
+        time.sleep(5)
         await websocket.send(json.dumps(name))
 
     async def sub(address):
