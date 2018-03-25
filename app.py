@@ -127,6 +127,23 @@ class UserTop(Resource):
         return "%s(%s)" % (self.__class__.__name__, parser.parse_args())
 
 
+class AD(Resource):
+    '''
+    广告，
+    第一种是首页的, /1
+    第二种是详情页的 /2
+    '''
+
+    @cache.cached(timeout=60 * 5)
+    def get(self, type):
+        if type == 'home':
+            _id = mongo.db.ad.find_one({"type": "home"})['id']
+            return mongo.db.dapps.find_one({'id': _id},
+                                           {'_id': 0, 'address': 0, 'h1': 0, 'd1': 0, 'd7': 0, 'links': 0, "type": 0})
+        elif type == 'detail':
+            return mongo.db.ad.find_one({"type": "detail"}, {"_id": 0, "type": 0, })
+
+
 api.add_resource(Dapps, '/dapps')
 api.add_resource(Dapps2, '/dapps2')
 api.add_resource(Dapp, '/dapps/<string:dapp_id>')
@@ -134,6 +151,7 @@ api.add_resource(DappContract, '/dapps/<string:dapp_id>/contract')
 api.add_resource(DappTop, '/dapps/<string:dapp_id>/top')
 api.add_resource(User, '/user/<string:address>')
 api.add_resource(UserTop, '/user')
+api.add_resource(AD, '/featured/<string:type>')
 
 
 @celery.task
