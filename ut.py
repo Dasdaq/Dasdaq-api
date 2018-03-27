@@ -29,11 +29,39 @@ def getdappradar():
     df = DataFrame(z.json())
     df.to_csv('dappradar.csv')
 
+
 def getdapdap():
     url = 'http://api.dapdap.io/dapps2'
     z = requests.get(url)
     df = DataFrame(z.json()['data'])
     df.to_csv('dapdap.csv')
+
+
+def getdappradar_info(id):
+    '获取dappradar 某个游戏的信息'
+    url = 'https://dappradar.com/api/dapp/{}'.format(id)
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.119 Safari/537.36'}
+    z = requests.get(url, headers=headers)
+    return z.json()
+
+
+def getdappradar_info(id):
+    '获取dappradar 某个游戏的信息'
+    url = 'https://dappradar.com/api/dapp/{}'.format(id)
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.119 Safari/537.36'}
+    z = requests.get(url, headers=headers)
+    return z.json()
+
+
+def getdappradar_contract(id):
+    '获取dappradar 某个游戏的合约'
+    url = 'https://dappradar.com/api/dapp/{}/contracts'.format(id)
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.119 Safari/537.36'}
+    z = requests.get(url, headers=headers)
+    return [i['address'].lower() for i in z.json()]
 
 
 if __name__ == '__main__':
