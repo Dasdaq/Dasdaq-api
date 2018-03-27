@@ -266,6 +266,42 @@ def run():
             savetomongo(data=ret, dbname='dapps', key='id')
 
 
+def runWithGameId(gameid):
+    contracts = db['dapps'].find_one({'id': gameid})['address']
+    df5 = pd.DataFrame(list(db['tokens'].find({"address": {"$in": contracts}})))
+    df5 = init_df(df5)
+    df1 = df5[df5.action == 'txlist']
+    ret = x(df1)
+    ret['updatedAt'] = arrow.utcnow().format(r'YYYY-MM-DD HH:mm:ss')
+    ret['id'] = gameid
+    # 1h的数据，按每分钟分割
+    start_time, end_time = lastxxt('1h')
+    _ = pd.date_range(start_time, end_time, freq='T')
+    h1 = dateRange(df1, _, day=False)
+    # 1d的数据,按每小时分割
+    start_time, end_time = lastxxt('1d')
+    _ = pd.date_range(start_time, end_time, freq='H')
+    d1 = dateRange(df1, _, day=False)
+    # 一天的总体运营情况
+    df1d = df1[(df1['t'] > start_time) & (df1['t'] <= end_time)]
+    ret['volumeLastDay'] = df1d.value.sum() / 1e+18
+    ret['txLastDay'] = len(df1d)
+    ret['dauLastDay'] = len(df1d['from'].value_counts().index)
+    # 7d的数据，按每天分割
+    start_time, end_time = lastxxt('7d')
+    _ = pd.date_range(start_time, end_time, freq='D')
+    d7 = dateRange(df1, _, day=True)
+    # 7天内的总体运营情况
+    df7d = df1[(df1['t'] > start_time) & (df1['t'] <= end_time)]
+    ret['volumeLastWeek'] = df7d.value.sum() / 1e+18
+    ret['txLastWeek'] = len(df7d)
+
+    ret['h1'] = h1
+    ret['d1'] = d1
+    ret['d7'] = d7
+    savetomongo(data=ret, dbname='dapps', key='id')
+
+
 def run_yl():
     d7ago = '1521030065'
     client = db['tokens']
