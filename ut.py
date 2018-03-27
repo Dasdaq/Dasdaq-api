@@ -1,6 +1,7 @@
 from web3 import Web3, HTTPProvider
 import requests
 from parsel import Selector
+from pandas import DataFrame
 
 web3 = Web3(HTTPProvider('https://mainnet.infura.io/D7qVYwcifGfuGYBN92qw'))
 
@@ -22,5 +23,19 @@ def getTotalTransationCount(ad):
     return int(sel.css('.hidden-xs').xpath('span[2]').re('\d+')[0])
 
 
+def getdappradar():
+    url = 'https://dappradar.com/api/dapps'
+    z = requests.get(url)
+    df = DataFrame(z.json())
+    df.to_csv('dappradar.csv')
+
+def getdapdap():
+    url = 'http://api.dapdap.io/dapps2'
+    z = requests.get(url)
+    df = DataFrame(z.json()['data'])
+    df.to_csv('dapdap.csv')
+
+
 if __name__ == '__main__':
-    print(getblockNumber())
+    getdapdap()
+    getdappradar()

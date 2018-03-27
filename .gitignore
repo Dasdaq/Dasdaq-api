@@ -103,3 +103,4 @@ celerybeat-schedule.dir
 celerybeat.pid
 *.iml
 *.xml
+*.csv
