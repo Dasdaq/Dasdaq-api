@@ -9,6 +9,7 @@ from celery import Celery
 from ut import getBalance
 from main import updateContractBalance, run, getMaxBlockNumber
 import pymongo
+from tt import playGame
 
 
 def make_celery(app):
@@ -45,7 +46,8 @@ parser.add_argument('reverse')
 class Dapps(Resource):
     @cache.cached(timeout=60 * 5)
     def get(self):
-        dapp = mongo.db.dapps.find({}, {'_id': 0, 'address': 0, 'h1': 0, 'd1': 0, 'd7': 0, 'links': 0})
+        dapp = mongo.db.dapps.find(
+            {}, {'_id': 0, 'address': 0, 'h1': 0, 'd1': 0, 'd7': 0, 'links': 0})
         dapp = [item for item in dapp if
                 item['title'] not in ['0xBitcoin', 'ForkDelta', 'CryptoKitties', 'IDEX', 'Etheroll', 'PoWH 3D']]
         return {'data': sorted(dapp, key=lambda x: int(x['dauLastDay']), reverse=True)}
@@ -127,6 +129,16 @@ class UserTop(Resource):
         return "%s(%s)" % (self.__class__.__name__, parser.parse_args())
 
 
+class Inlian(Resource):
+    def get(self, text):
+        if tt:
+            tt = tt.strip()
+            tx = playGame(tt)
+            return {'tx': tx, 'ok': 1}
+        else:
+            return {'msg': '系统错误！', 'ok': 0}
+
+
 class AD(Resource):
     '''
     广告，
@@ -152,6 +164,7 @@ api.add_resource(DappTop, '/dapps/<string:dapp_id>/top')
 api.add_resource(User, '/user/<string:address>')
 api.add_resource(UserTop, '/user')
 api.add_resource(AD, '/featured/<string:type>')
+api.add_resource(Inlian, '/write/<string:text>')
 
 
 @celery.task
