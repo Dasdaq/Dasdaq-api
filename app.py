@@ -132,13 +132,16 @@ class UserTop(Resource):
 
 class Inlian(Resource):
     def get(self, text):
-        if text:
-            text = urllib.parse.unquote(text)
-            text = text.strip()
-            tx = playGame(text)
-            return {'tx': tx, 'ok': 1}
-        else:
-            return {'msg': '系统错误！', 'ok': 0}
+        try:
+            if text:
+                text = urllib.parse.unquote(text)
+                text = text.strip()
+                tx = playGame(text)
+                return {'tx': tx, 'ok': 1}
+
+        except:
+            pass
+        return {'msg': '系统错误,请重试', 'ok': 0}
 
 
 class AD(Resource):
