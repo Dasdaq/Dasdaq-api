@@ -10,7 +10,7 @@ from ut import getBalance
 from main import updateContractBalance, run, getMaxBlockNumber
 import pymongo
 from tt import playGame
-import urllib
+import urllib.parse
 
 
 def make_celery(app):
@@ -133,7 +133,7 @@ class UserTop(Resource):
 class Inlian(Resource):
     def get(self, text):
         if text:
-            text = urllib.unquote(text)
+            text = urllib.parse.unquote(text)
             text = text.strip()
             tx = playGame(text)
             return {'tx': tx, 'ok': 1}
