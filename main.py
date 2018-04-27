@@ -105,7 +105,8 @@ def userToContract():
             user_contract[x['address']].append(
                 {'id': i['id'], 'name': i['title'], 'value': x['value']})
     db['usercontract'].drop()
-    db['usercontract'].insert_many([{'address': k, 'data': v} for k, v in user_contract.items()])
+    db['usercontract'].insert_many(
+        [{'address': k, 'data': v} for k, v in user_contract.items()])
 
 
 def playsTop():
@@ -261,7 +262,8 @@ def run():
 
 def runWithGameId(gameid):
     contracts = db['dapps'].find_one({'id': gameid})['address']
-    df5 = pd.DataFrame(list(db['tokens'].find({"address": {"$in": contracts}})))
+    df5 = pd.DataFrame(
+        list(db['tokens'].find({"address": {"$in": contracts}})))
     df5 = init_df(df5)
     df1 = df5[df5.action == 'txlist']
     ret = x(df1)

@@ -11,6 +11,7 @@ from main import updateContractBalance, run, getMaxBlockNumber
 import pymongo
 from tt import playGame
 import urllib.parse
+from check import run as checktext
 
 
 def make_celery(app):
@@ -33,7 +34,7 @@ def make_celery(app):
 app = Flask(__name__)
 CORS(app, origins=["http://dapdap.io/*", "http://www.dapdap.io/*",
                    "https://dapdap.io/*", "https://www.dapdap.io/*",
-                   "http://localhost:8080","http://test.dapdap.io/*"])
+                   "http://localhost:8080", "http://test.dapdap.io/*"])
 app.config.from_pyfile('config.py')
 api = Api(app)
 mongo = PyMongo(app)
@@ -134,10 +135,13 @@ class Inlian(Resource):
     def get(self, text):
         try:
             if text:
-                text = urllib.parse.unquote(text)
-                text = text.strip()
-                tx = playGame(text)
-                return {'tx': tx, 'ok': 1}
+                if checktext(text):
+                    text = urllib.parse.unquote(text)
+                    text = text.strip()
+                    tx = playGame(text)
+                    return {'tx': tx, 'ok': 1}
+                else:
+                    return {'ok': 0, 'msg': '内容待审核！'}
 
         except:
             pass
