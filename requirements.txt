@@ -1,6 +1,6 @@
 amqp==2.2.2
 aniso8601==3.0.0
-arrow==0.12.1
+arrow==0.15.1
 billiard==3.5.0.3
 celery==4.1.0
 certifi==2018.1.18
